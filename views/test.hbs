@@ -1,0 +1,184 @@
+<html>
+<head>
+    <title id="browserTitleArea">네이버 뉴스</title>
+    <meta charset="utf-8">
+</head>
+
+<body>
+    userId : <input id="userId" type="text">
+    <button id="searchBtn">search</button>
+    <br/>
+    <br/>
+
+    <button id="newBtn">최신 더보기</button>
+    <div class="newsTable">
+        <ul id="newsList">
+        </ul>
+    </div>
+    <button id="pastBtn">과거 더보기</button>
+
+
+
+</body>
+
+
+
+
+
+
+<!-- title, image, office_name, writing_time, url -->
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrender/0.9.91/jsrender.js"></script>
+
+<script id="contentsTemplate" type="text/x-jsrender">
+    <li id="contents">
+        <div style="border: 1px solid #03cf5d">
+            <a href="{{:url}}" class="contentsLink">
+
+                <div>
+                    <img src="{{:image}}" width="110" height="75">
+                </div>
+            </a>
+
+            <div>
+                <span class="title"><strong>{{:title}}</strong></span>
+            </div>
+            <small>{{:office_name}}</small>
+            <small>{{:writing_time}}</small>
+            <br/>
+        </div>
+    </li>
+</script>
+
+<script>
+
+    var userId = "default";
+    var userIdVal = "";
+    var domain = "http://localhost:3000"; 
+
+
+    var initPage = (function () {
+        $.templates({
+            contentsTempl: "#contentsTemplate"
+        });
+        
+        
+        getFirstContents(userId);
+
+        $('#searchBtn').click(function() {
+            clickSearchBtn();
+        });
+
+        $('#newBtn').click(function() {
+            clickNewBtn();
+        });
+
+        $('#pastBtn').click(function() {
+            clickPastBtn();
+        });
+
+    })();
+
+    var clickSearchBtn = function() {
+
+        if(userIdVal !== $('#userId').val()){
+            eraseCookie('contentsInfo');
+            console.log("!!");
+        }
+
+        userIdVal = $('#userId').val();
+        userId = (userIdVal == "") ? "default" : userIdVal;
+
+        $('#newsList').find('li').remove();
+        getFirstContents(userId);
+    }
+
+    var clickNewBtn = function() {
+        getNewContents(userId);
+    }
+
+    var clickPastBtn = function() {
+        getPastContents(userId);
+    }
+
+function eraseCookie(name) {   
+    document.cookie = name+'=; Max-Age=-99999999;';  
+}
+
+
+
+
+
+    function getFirstContents(userId) { 
+        $.ajax({
+            url: domain + "/contents/" + userId,
+            type: 'GET',
+            xhrFields: { withCredentials: true },
+            success: function (res) {
+                console.log("초기 데이터 가져오기");
+                console.log(res);
+                $('#newsList').append(makeHtmlTemplate(res));
+            },
+            error: function (res) {
+                alert(res.message);
+            },
+        });
+    }
+
+    function getNewContents(userId) { 
+        $.ajax({
+            url: domain + "/contents/newContents/" + userId,
+            type: 'GET',
+            xhrFields: { withCredentials: true },
+            success: function (res) {
+                console.log("새로운 데이터 가져오기");
+                console.log(res);
+                $('#newsList').prepend(makeHtmlTemplate(res));
+            },
+            error: function (res) {
+                
+                alert(res);
+            },
+        });
+    }
+
+    function getPastContents() { 
+        $.ajax({
+            url: domain + "/contents/pastContents/" + userId,
+            type: 'GET',
+            xhrFields: { withCredentials: true },
+            success: function (res) {
+                console.log("과거 데이터 가져오기");
+                console.log(res);
+                $('#newsList').append(makeHtmlTemplate(res));
+            },
+            error: function (res) {
+                
+                alert(res.message);
+            },
+        });
+    }
+
+    function makeHtmlTemplate(dataList) {
+        var result = "";
+
+        for (var i = 0; i < dataList.data.length; i++) {
+            var data = dataList.data[i];
+            var contentHtml = $.templates.contentsTempl.render(data);
+            result += contentHtml;
+        }
+        return result;
+    }
+
+
+
+
+
+
+
+</script>
+
+
+</html>
